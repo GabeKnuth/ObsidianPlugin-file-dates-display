@@ -1,0 +1,29 @@
+/* Styles for File Dates Plugin */
+
+.file-dates-container {
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    line-height: 1.5;
+    font-size: 12px; /* Default size, will be overridden by plugin settings */
+    padding: 0;
+    margin-top: 8px;
+    display: block;
+    width: 100%;
+}
+
+/* Make sure date display is above title with proper spacing */
+.inline-title {
+    display: block;
+    margin-top: 0;
+}
+
+/* When in edit mode, make sure our container stays above the title */
+.cm-editor .file-dates-container {
+    margin-bottom: 8px;
+}
+
+/* Ensure consistent display in both edit and preview modes */
+.markdown-source-view .file-dates-container,
+.markdown-preview-view .file-dates-container {
+    padding-left: 0;
+}
