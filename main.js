@@ -25,9 +25,7 @@ class FileDatesPlugin extends obsidian.Plugin {
         // Update when layout changes (for active file)
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
-                setTimeout(() => {
-                    this.updateActiveDates();
-                }, 100); // Small delay to ensure UI is ready
+                this.updateActiveDates();
             })
         );
         
@@ -40,6 +38,11 @@ class FileDatesPlugin extends obsidian.Plugin {
                 }
             })
         );
+
+        // Add window resize event listener - without debounce for immediate response
+        this.registerDomEvent(window, 'resize', () => {
+            this.updateActiveDates();
+        });
 
         // Add settings tab
         this.addSettingTab(new FileDatesSettingTab(this.app, this));
@@ -63,11 +66,7 @@ class FileDatesPlugin extends obsidian.Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file) return;
         
-        // Remove all existing date containers first to prevent duplicates
-        const existingContainers = view.containerEl.querySelectorAll('.file-dates-container');
-        existingContainers.forEach(container => container.remove());
-        
-        // First look for the content-container which contains the inline title
+        // Find the content container which contains the inline title
         const contentContainer = view.containerEl.querySelector('.inline-title')?.closest('.markdown-source-view, .markdown-preview-view');
         if (!contentContainer) return;
 
@@ -75,12 +74,14 @@ class FileDatesPlugin extends obsidian.Plugin {
         const inlineTitleEl = contentContainer.querySelector('.inline-title');
         if (!inlineTitleEl) return;
         
-        // Create a new date container
-        const dateContainer = document.createElement('div');
-        dateContainer.classList.add('file-dates-container');
-        
-        // Insert before the title
-        inlineTitleEl.parentElement.insertBefore(dateContainer, inlineTitleEl);
+        // Get or create our date container
+        let dateContainer = view.containerEl.querySelector('.file-dates-container');
+        if (!dateContainer) {
+            dateContainer = document.createElement('div');
+            dateContainer.classList.add('file-dates-container');
+            // Insert before the title
+            inlineTitleEl.parentElement.insertBefore(dateContainer, inlineTitleEl);
+        }
         
         // Update the dates text
         let dateText = '';
@@ -105,7 +106,18 @@ class FileDatesPlugin extends obsidian.Plugin {
         dateContainer.style.fontSize = this.settings.fontSize;
         if (this.settings.italic) {
             dateContainer.style.fontStyle = 'italic';
+        } else {
+            dateContainer.style.fontStyle = 'normal';
         }
+        
+        // Apply alignment directly through inline style
+        // This ensures it follows the title alignment regardless of theme or width
+        const titleStyle = window.getComputedStyle(inlineTitleEl);
+        dateContainer.style.textAlign = titleStyle.textAlign;
+        dateContainer.style.paddingLeft = titleStyle.paddingLeft;
+        dateContainer.style.paddingRight = titleStyle.paddingRight;
+        dateContainer.style.marginLeft = titleStyle.marginLeft;
+        dateContainer.style.marginRight = titleStyle.marginRight;
     }
     
     formatDate(timestamp) {
